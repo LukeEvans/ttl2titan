@@ -1,0 +1,263 @@
+<project name="RDF-Import" default="test">
+
+    <property name="root.dir" value="${basedir}" />
+    <property file="${root.dir}/build.properties" />
+    
+    <!-- ================================================================== -->
+    <!-- General cleaning sources                                           -->
+    <!-- ================================================================== -->
+
+    <target name="clean" description="--> clean the project">
+        <echo>cleaning ${ant.project.name}</echo>
+        <delete includeemptydirs="true" failonerror="false">
+            <fileset dir="${build.dir}" excludes="classes-*-eclipse/" />
+        </delete>
+    </target>
+
+
+	<!-- ================================================================== -->
+	<!-- Maven                                                              -->
+	<!-- ================================================================== -->
+
+	<target name="mvn-init" unless="compile.classpath" xmlns:artifact="urn:maven-artifact-ant">
+		<path id="maven.ant.tasks.classpath" path="${lib.dir}/maven-ant-tasks-2.0.10.jar" />
+		
+	    <typedef resource="org/apache/maven/artifact/ant/antlib.xml" uri="urn:maven-artifact-ant"
+	        classpathref="maven.ant.tasks.classpath"/>
+	        
+	    <condition property="maven.repo.local" value="${maven.repo.local}" else="${user.home}/.m2/repository">
+	        <isset property="maven.repo.local"/>
+	    </condition>
+	    <artifact:localRepository id="local.repository" path="${maven.repo.local}"/>
+	    <artifact:pom file="pom.xml" id="maven.project"/>
+	    <artifact:dependencies pathId="compile.classpath" filesetId="compile.fileset" useScope="compile">
+	        <pom refid="maven.project"/>
+	        <localRepository refid="local.repository"/>
+	    </artifact:dependencies>
+	    <artifact:dependencies pathId="test.classpath" filesetId="test.fileset" useScope="test">
+	        <pom refid="maven.project"/>
+	        <localRepository refid="local.repository"/>
+	    </artifact:dependencies>
+	    <artifact:dependencies pathId="runtime.classpath" filesetId="runtime.fileset" useScope="runtime">
+	        <pom refid="maven.project"/>
+	        <localRepository refid="local.repository"/>
+	    </artifact:dependencies>
+	</target>
+
+    <!-- ================================================================== -->
+    <!-- Build sources                                                      -->
+    <!-- ================================================================== -->
+
+	<target name="compile"
+	        depends="mvn-init"
+	        description="--> compile main classes">
+        <mkdir dir="${build.dir.main-classes}" />
+        <javac encoding="${build.encoding}"
+               srcdir="${main.src.dir}"
+               includes="**/*.java"
+               destdir="${build.dir.main-classes}"
+               debug="${javac.debug}"
+               optimize="${javac.optimize}"
+               target="${javac.version}"
+               source="${javac.version}"
+		       includeAntRuntime="false"
+               deprecation="${javac.deprecation}">
+            <compilerarg line="${javac.args} ${javac.args.warnings}" />
+            <classpath refid="compile.classpath" />
+        </javac>
+    </target>
+
+
+    <!-- ================================================================== -->
+    <!-- Unit Tests                                                         -->
+    <!-- ================================================================== -->
+
+    <target name="compile-test" depends="compile">
+        <echo>*** Building Unit Tests Sources ***</echo>
+        <mkdir dir="${build.dir.test-classes}" />
+        <path id="test.path">
+            <pathelement location="${build.dir.main-classes}" />
+        </path>
+
+        <javac encoding="${build.encoding}"
+               srcdir="${test.src.dir}"
+               includes="**/*.java"
+               destdir="${build.dir.test-classes}"
+               debug="${javac.debug}"
+               optimize="${javac.optimize}"
+               target="${javac.version}"
+               source="${javac.version}"
+		       includeAntRuntime="false"
+               deprecation="${javac.deprecation}">
+            <compilerarg line="${javac.args} ${javac.args.warnings}" />
+            <classpath refid="test.classpath" />
+            <classpath refid="test.path" />
+        </javac>
+    </target>
+
+    <target name="test" depends="compile-test" description="--> run unit tests">
+        <delete dir="${build.dir.test-reports}" />
+        <mkdir dir="${build.dir.test-reports}" />
+
+        <junit showoutput="false"
+               printsummary="yes"
+               haltonfailure="no"
+               fork="yes"
+               maxmemory="256m"
+               dir="${basedir}"
+               errorProperty="tests.failed"
+               failureProperty="tests.failed">
+            <classpath>
+                <pathelement location="${build.dir.main-classes}" />
+                <pathelement location="${build.dir.test-classes}" />
+                <pathelement location="${test.res.dir}" />
+                <pathelement location="${main.res.dir}" />
+                <path refid="test.classpath" />
+            </classpath>
+            <formatter type="plain" />
+            <batchtest fork="yes" todir="${build.dir.test-reports}" unless="testcase">
+                <fileset dir="${test.src.dir}">
+                    <include name="**/*Test.java" unless="testcase" />
+                    <exclude name="**/Abstract*.java" unless="testcase" />
+                    <include name="${testcase}" if="testcase" />
+                </fileset>
+            </batchtest>
+            <batchtest fork="yes" todir="${build.dir.test-reports}" if="testcase">
+                <fileset dir="${test.src.dir}" includes="**/${testcase}.java" />
+            </batchtest>
+        </junit>
+        <fail if="tests.failed">Tests failed!</fail>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Splitter jar                                                       -->
+    <!-- ================================================================== -->
+
+    <target name="jar"
+            depends="compile"
+            description="--> create a combo jar with all dependencies">
+
+        <!-- Make sure lib/ dir starts out empty, so we don't get multiple
+		     copies of jars with slightly different versions
+		 -->
+        <delete dir="${build.dir}/lib" />
+        <mkdir dir="${build.dir}/lib" />
+
+        <copy todir="${build.dir}/lib" flatten="true">
+            <path refid="runtime.classpath" />
+        </copy>
+
+        <jar jarfile="${build.dir}/external-libs.jar">
+            <zipgroupfileset dir="${build.dir}/lib" includes="*.jar" />
+        </jar>
+
+        <jar destfile="${build.dir}/${jar.name}" compress="true">
+            <zipfileset src="${build.dir}/external-libs.jar">
+              <exclude name="META-INF/**"/>
+            </zipfileset>
+
+            <fileset dir="${build.dir.main-classes}" />
+            <fileset dir="${main.res.dir}" />
+            
+            <manifest>
+              <attribute name="Main-Class" value="com.scaleunlimited.wikipedia.SplitXmlTool"/>
+            </manifest>
+        </jar>
+        
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Hadoop job jar                                                     -->
+    <!-- ================================================================== -->
+
+    <target name="job"
+            depends="compile"
+            description="--> create a Hadoop ready jar with all dependencies">
+
+        <!-- Make sure lib/ dir starts out empty, so we don't get multiple
+		     copies of jars with slightly different versions
+		 -->
+        <delete dir="${build.dir}/lib" />
+        <mkdir dir="${build.dir}/lib" />
+
+        <copy todir="${build.dir}/lib" flatten="true">
+            <path refid="runtime.classpath" />
+        </copy>
+
+        <jar destfile="${build.dir}/${job.name}" compress="true">
+            <fileset dir="${build.dir.main-classes}" />
+            <fileset dir="${main.res.dir}" />
+            <fileset dir="${build.dir}" includes="lib/" />
+            
+            <manifest>
+              <attribute name="Main-Class" value="com.reactor.mapred.ImportJob"/>
+            </manifest>
+
+        </jar>
+    </target>
+
+
+	<!-- ================================================================== -->
+	<!-- Generate a distribution                                            -->
+	<!-- ================================================================== -->
+
+	<target name="dist"
+		    depends="test, jar"
+	        description="--> create a tarball distribution">
+
+		<delete dir="${build.dir.dist}" />
+
+		<!-- create target directory -->
+		<mkdir dir="${build.dir.dist}" />
+		<mkdir dir="${build.dir.dist}/doc" />
+		<mkdir dir="${build.dir.dist}/lib" />
+		<mkdir dir="${build.dir.dist}/src" />
+
+		<!-- copy libs -->
+		<copy todir="${build.dir.dist}/lib" flatten="true">
+			<fileset dir="${basedir}/lib" />
+		</copy>
+		
+		<!-- copy src -->
+		<copy todir="${build.dir.dist}/src">
+			<fileset dir="${basedir}/src" />
+		</copy>
+		
+		<!-- copy documents -->
+		<copy todir="${build.dir.dist}">
+			<fileset file="${basedir}/README" />
+		</copy>
+		<copy todir="${build.dir.dist}">
+			<fileset file="${basedir}/README-Splitting" />
+		</copy>
+		<copy todir="${build.dir.dist}/doc">
+			<fileset file="${basedir}/doc/eclipse-formatter.properties" />
+		</copy>
+		
+		<!-- copy the build file -->
+		<copy todir="${build.dir.dist}">
+			<fileset file="${basedir}/build.xml" />
+		</copy>
+
+		<!-- copy the build properties -->
+		<copy todir="${build.dir.dist}">
+			<fileset file="${basedir}/build.properties" />
+		</copy>
+
+		<!-- copy the pom file -->
+		<copy todir="${build.dir.dist}">
+			<fileset file="${basedir}/pom.xml" />
+		</copy>
+
+		<tar longfile="gnu" compression="gzip" destfile="${build.release.file}">
+			<tarfileset dir="${build.dir.dist}">
+			    <include name="**" />
+			    <exclude name="bin/*" />
+			</tarfileset>
+			<tarfileset dir="${build.dir.dist}" mode="755">
+			    <include name="bin/*" />
+			</tarfileset>
+		</tar>
+	</target>
+
+</project>
