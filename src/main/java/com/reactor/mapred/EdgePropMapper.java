@@ -12,15 +12,15 @@ import com.reactor.mapred.config.RDFJobOptions;
 import com.reactor.rdf.Triple;
 import com.tinkerpop.blueprints.Vertex;
 
-public class ImportMapper extends Mapper<LongWritable, Text, Text, Text> {
-	private static final Logger LOGGER = Logger.getLogger(ImportMapper.class);
+public class EdgePropMapper extends Mapper<LongWritable, Text, Text, Text> {
+	private static final Logger LOGGER = Logger.getLogger(EdgePropMapper.class);
 	private static final long BATCH_SIZE = 1000;
 	private Gremlin gremlin;
 	private long count;
 	
     @Override
     protected void setup(Mapper<LongWritable, Text, Text, Text>.Context context) throws IOException, InterruptedException {
-    	System.out.println("Setting up mapper... ");
+    	System.out.println("Setting up edge/property mapper... ");
     	String hostList = context.getConfiguration().get(RDFJobOptions.HOST_LIST_KEY, RDFJobOptions.DEFAULT_CASSANDRA_HOST_LIST);
     	gremlin = new Gremlin(hostList);
     	count = 0;
@@ -62,13 +62,13 @@ public class ImportMapper extends Mapper<LongWritable, Text, Text, Text> {
 		try {
 			
 			if (!triple.property) {
-				Vertex v1 = gremlin.addVertex(triple.subject);
-				Vertex v2 = gremlin.addVertex(triple.objectString());
+				Vertex v1 = gremlin.getIDVertex(triple.subject);
+				Vertex v2 = gremlin.getIDVertex(triple.objectString());
 				gremlin.addEdge(triple.predicate, v1, v2);
 			}
-
+			
 			else {
-				Vertex v1 = gremlin.addVertex(triple.subject);
+				Vertex v1 = gremlin.getIDVertex(triple.subject);
 				gremlin.addProperty(v1, triple.predicate, triple.object);
 			}
 
@@ -79,8 +79,8 @@ public class ImportMapper extends Mapper<LongWritable, Text, Text, Text> {
 	
     @Override
     protected void cleanup(Mapper<LongWritable, Text, Text, Text>.Context context) throws IOException, InterruptedException {
-    	System.out.println("Committing graph... ");
+    	System.out.println("Committing vertex graph... ");
     	gremlin.commit();
-    	System.out.println("Cleaning up mapper... ");
+    	System.out.println("Cleaning up vertex mapper... ");
     }
 }

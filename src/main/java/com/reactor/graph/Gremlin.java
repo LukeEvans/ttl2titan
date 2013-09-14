@@ -12,11 +12,14 @@ import com.thinkaurelius.titan.core.TitanVertex;
 import com.thinkaurelius.titan.core.TypeGroup;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.KeyIndexableGraph;
 import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.util.wrappers.id.IdGraph;
 
 public class Gremlin {
 
 	TitanGraph graph;
+	IdGraph<KeyIndexableGraph> idGraph;
 
 	@SuppressWarnings("serial")
 	public static final Map<String, String> LOWERCASE_PROPERTIES = new HashMap<String, String>() {{
@@ -35,6 +38,8 @@ public class Gremlin {
 		conf.setProperty("storage.hostname","127.0.0.1");
 
 		graph = TitanFactory.open(conf);
+
+		prepareIDGraph();
 	}
 
 	public Gremlin(TitanGraph g) {
@@ -47,8 +52,22 @@ public class Gremlin {
 		conf.setProperty("storage.hostname",hostList);
 
 		graph = TitanFactory.open(conf);
+		
+		prepareIDGraph();
 	}
-	
+
+	public void prepareIDGraph() {
+
+		System.out.println("Wrapping graph in ID Graph...");
+		try {
+//			idGraph = new IdGraph(graph,true,false);
+			graph.makeType().name("__id").unique(Direction.OUT).indexed(Vertex.class).indexed(Edge.class).dataType(String.class).makePropertyKey();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		idGraph = new IdGraph<KeyIndexableGraph>(graph);
+	}
 	//================================================================================
 	// Define indices for Freebase data
 	//================================================================================
@@ -56,7 +75,7 @@ public class Gremlin {
 
 		try {
 			graph.makeType().name("mid").dataType(String.class).indexed(Vertex.class).unique(Direction.BOTH).makePropertyKey();
-			
+
 			TypeGroup rsearch = TypeGroup.of(2, "rsearch");
 			graph.makeType().name("ralias").dataType(String.class).indexed(Vertex.class).group(rsearch).makePropertyKey();
 			graph.makeType().name("lower_ralias").dataType(String.class).indexed(Vertex.class).group(rsearch).makePropertyKey();
@@ -72,7 +91,7 @@ public class Gremlin {
 			graph.commit();
 
 			System.out.println("Added Indices");
-			
+
 		} catch (Exception e) {
 			// Indices already set up
 			e.printStackTrace();
@@ -82,41 +101,19 @@ public class Gremlin {
 	//================================================================================
 	// Add vertex
 	//================================================================================
-	public Vertex addVertex(String mid) {
-
+	public void addIDVertex(String mid) {
 		try {
-			Vertex old = getVertex(mid);
-			if (old != null) {
-				return old;
-			}
-
-			Vertex v = graph.addVertex(null);
-			v.setProperty("mid", mid);
-
-			return v;
-		} catch (Exception e) {
-			return getVertex(mid);
-		}
-	}
-
-	//================================================================================
-	// Add vertex and forget
-	//================================================================================
-	public void lazyAddVertex(String mid) {
-		try {
-			System.out.println("MID: " + mid);
-			Vertex v = graph.addVertex(null);
+			Vertex v = idGraph.addVertex(mid);
 			v.setProperty("mid", mid);
 		} catch (Exception e) {
-			e.printStackTrace();
-			// Ignore
+			// I don't care
 		}
 	}
 
 	//================================================================================
 	// Get Vertex
 	//================================================================================
-	public Vertex getVertex(String mid) {
+	public Vertex getIDVertex(String mid) {
 
 		try {
 			Vertex v = graph.getVertices("mid", mid).iterator().next();
@@ -171,6 +168,7 @@ public class Gremlin {
 			}
 
 		} catch (Exception e) {
+			e.printStackTrace();
 			// Ignore
 		}
 	}
@@ -179,7 +177,7 @@ public class Gremlin {
 	// HouseKeeping
 	//================================================================================
 	public boolean properlyConnected() {
-		return graph != null;
+		return idGraph != null;
 	}
 
 	//================================================================================
@@ -187,7 +185,7 @@ public class Gremlin {
 	//================================================================================
 	public void commit() {
 		try {
-			graph.commit();
+			idGraph.commit();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
