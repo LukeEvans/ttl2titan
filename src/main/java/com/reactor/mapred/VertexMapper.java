@@ -43,7 +43,6 @@ public class VertexMapper extends Mapper<LongWritable, Text, Text, Text> {
 				count++;
 				
 				if (count % BATCH_SIZE == 0) {
-					System.out.println(triple);
 					System.out.println("Committing Batch...");
 					gremlin.commit();
 					System.out.println("Committed Batch... ");

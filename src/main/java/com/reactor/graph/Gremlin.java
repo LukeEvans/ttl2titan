@@ -15,6 +15,7 @@ import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.KeyIndexableGraph;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.wrappers.id.IdGraph;
+import com.tinkerpop.blueprints.util.wrappers.id.IdVertex;
 
 public class Gremlin {
 
@@ -60,10 +61,9 @@ public class Gremlin {
 
 		System.out.println("Wrapping graph in ID Graph...");
 		try {
-//			idGraph = new IdGraph(graph,true,false);
 			graph.makeType().name("__id").unique(Direction.OUT).indexed(Vertex.class).indexed(Edge.class).dataType(String.class).makePropertyKey();
 		} catch (Exception e) {
-			e.printStackTrace();
+			System.out.println("ID index already created");
 		}
 		
 		idGraph = new IdGraph<KeyIndexableGraph>(graph);
@@ -113,7 +113,7 @@ public class Gremlin {
 	//================================================================================
 	// Get Vertex
 	//================================================================================
-	public Vertex getIDVertex(String mid) {
+	public Vertex getVertex(String mid) {
 
 		try {
 			Vertex v = graph.getVertices("mid", mid).iterator().next();
@@ -128,6 +128,20 @@ public class Gremlin {
 		}
 	}
 
+	public Vertex getIDVertex(String mid) {
+
+		try {
+			IdVertex idv = (IdVertex) idGraph.getVertex(mid);
+			Vertex v = idv.getBaseVertex();
+
+			return v;
+
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	
 	//================================================================================
 	// Add Edge
 	//================================================================================
