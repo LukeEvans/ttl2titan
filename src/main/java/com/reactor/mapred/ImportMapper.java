@@ -7,12 +7,25 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.log4j.Logger;
 
-import com.reactor.mapred.config.ImportCounters;
+import com.reactor.graph.Gremlin;
+import com.reactor.mapred.config.RDFJobOptions;
 import com.reactor.rdf.Triple;
+import com.tinkerpop.blueprints.Vertex;
 
 public class ImportMapper extends Mapper<LongWritable, Text, Text, Text> {
 	private static final Logger LOGGER = Logger.getLogger(ImportMapper.class);
-
+	private static final long BATCH_SIZE = 1000;
+	private Gremlin gremlin;
+	private long count;
+	
+    @Override
+    protected void setup(Mapper<LongWritable, Text, Text, Text>.Context context) throws IOException, InterruptedException {
+    	System.out.println("Setting up mapper... ");
+    	String hostList = context.getConfiguration().get(RDFJobOptions.HOST_LIST_KEY, RDFJobOptions.DEFAULT_CASSANDRA_HOST_LIST);
+    	gremlin = new Gremlin(hostList);
+    	count = 0;
+    }
+    
 	@Override
 	protected void map(LongWritable lineNum, Text value, Context context) throws IOException, InterruptedException {
 
@@ -26,18 +39,48 @@ public class ImportMapper extends Mapper<LongWritable, Text, Text, Text> {
 			Triple triple = new Triple(line);
 
 			if (triple != null && triple.determineValid()) {
-				Text k = new Text();
-				k.set(triple.subject);
+				run(triple);
 				
-				Text v = new Text();
-				v.set(line);
+				count++;
 				
-				context.write(k, v);
+				if (count % BATCH_SIZE == 0) {
+					System.out.println(triple);
+					System.out.println("Committing Batch...");
+					gremlin.commit();
+					System.out.println("Committed Batch... ");
+				}
 			}
 			
 		} catch (Exception e) {
-			context.getCounter(ImportCounters.TRIPLES_FAILED).increment(1);
 			LOGGER.error("Can't parse input line: " + value.toString(), e);
 		}
 	}
+	
+    // Run the gremlin queries to add triple
+	protected void run(Triple triple) {
+
+		try {
+			
+			if (!triple.property) {
+				Vertex v1 = gremlin.addVertex(triple.subject);
+				Vertex v2 = gremlin.addVertex(triple.objectString());
+				gremlin.addEdge(triple.predicate, v1, v2);
+			}
+
+			else {
+				Vertex v1 = gremlin.addVertex(triple.subject);
+				gremlin.addProperty(v1, triple.predicate, triple.object);
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+    @Override
+    protected void cleanup(Mapper<LongWritable, Text, Text, Text>.Context context) throws IOException, InterruptedException {
+    	System.out.println("Committing graph... ");
+    	gremlin.commit();
+    	System.out.println("Cleaning up mapper... ");
+    }
 }
