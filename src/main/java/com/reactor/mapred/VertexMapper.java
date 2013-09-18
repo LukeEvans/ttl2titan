@@ -31,18 +31,30 @@ public class VertexMapper extends Mapper<LongWritable, Text, Text, Text> {
 				return;
 			}
 
-			Triple triple = new Triple(line);
+			Triple triple = null;
+			
+			try {
+				triple = new Triple(line);
+			} catch (Exception e) {
+				context.getCounter(ImportCounters.VERTEX_FAILED_TRIPLE_BUILD).increment(1l);
+				return;
+			}
 
 			if (triple != null && triple.determineValid()) {
 				run(triple);
+
+				Text key = new Text(triple.subject);
+				Text val = new Text(line);
+				context.write(key, val);
+
+				context.getCounter(ImportCounters.VERTEX_SUCCESSFUL_TRANSACTIONS).increment(1l);
 			}
 
-			context.getCounter(ImportCounters.VERTEX_SUCCESSFUL_TRANSACTIONS).increment(1l);
-			
 		} catch (Exception e) {
 			context.getCounter(ImportCounters.VERTEX_FAILED_TRANSACTIONS).increment(1l);
 			gremlin.rollback();
-			
+			e.printStackTrace();
+
 			throw new IOException(e.getMessage(), e);
 		}
 	}
@@ -51,7 +63,6 @@ public class VertexMapper extends Mapper<LongWritable, Text, Text, Text> {
 	protected void run(Triple triple) {
 
 		try {
-
 			gremlin.addIDVertex(triple.subject);
 
 			if (!triple.property) {
@@ -59,7 +70,7 @@ public class VertexMapper extends Mapper<LongWritable, Text, Text, Text> {
 			}
 
 		} catch (Exception e) {
-			e.printStackTrace();
+			// Ignore
 		}
 	}
 

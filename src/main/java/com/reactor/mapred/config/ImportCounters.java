@@ -10,6 +10,9 @@ public enum ImportCounters {
     
     VERTICES_ADDED,
     PROPERTIES_ADDED,
-    EDGES_ADDED
+    EDGES_ADDED,
+    
+    VERTEX_FAILED_TRIPLE_BUILD,
+    EDGEPROP_FAILED_TRIPLE_BUILD
     
 }
