@@ -103,8 +103,7 @@ public class Gremlin {
 	//================================================================================
 	public void addIDVertex(String mid) {
 		try {
-			Vertex v = idGraph.addVertex(mid);
-			v.setProperty("mid", mid);
+			idGraph.addVertex(mid);
 		} catch (Exception e) {
 			// I don't care
 		}
