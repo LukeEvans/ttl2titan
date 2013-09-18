@@ -2,9 +2,14 @@ package com.reactor.mapred.config;
 
 public enum ImportCounters {
 
-    TRIPLES_TOTAL,				 // Total number of triples
-    TRIPLES_VALID,               // Total of valid triples
-    TRIPLES_SKIPPED,             // Total triples skipped for various reasons
+    VERTEX_FAILED_TRANSACTIONS,				   // Total number of transactions failed
+    VERTEX_SUCCESSFUL_TRANSACTIONS,               // Total of successful transactions
     
-    TRIPLES_FAILED,				 // Total triples that failed
+    EDGEPROP_FAILED_TRANSACTIONS,
+    EDGEPROP_SUCCESSFUL_TRANSACTIONS,
+    
+    VERTICES_ADDED,
+    PROPERTIES_ADDED,
+    EDGES_ADDED
+    
 }

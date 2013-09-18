@@ -53,7 +53,7 @@ public class Gremlin {
 		conf.setProperty("storage.hostname",hostList);
 
 		graph = TitanFactory.open(conf);
-		
+
 		prepareIDGraph();
 	}
 
@@ -65,7 +65,7 @@ public class Gremlin {
 		} catch (Exception e) {
 			System.out.println("ID index already created");
 		}
-		
+
 		idGraph = new IdGraph<KeyIndexableGraph>(graph);
 	}
 	//================================================================================
@@ -140,7 +140,7 @@ public class Gremlin {
 		}
 	}
 
-	
+
 	//================================================================================
 	// Add Edge
 	//================================================================================
@@ -203,4 +203,28 @@ public class Gremlin {
 			e.printStackTrace();
 		}
 	}
+
+	//================================================================================
+	// Graph Rollback
+	//================================================================================
+	public void rollback() {
+		try {
+			idGraph.rollback();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	//================================================================================
+	// Graph shutdown
+	//================================================================================
+	public void shutdown() {
+		try {
+			idGraph.shutdown();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
 }

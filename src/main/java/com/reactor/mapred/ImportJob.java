@@ -14,6 +14,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Counters;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
@@ -100,6 +101,10 @@ public class ImportJob {
 
 		// run job and block until job is done
 		job.waitForCompletion(false);
+		
+		// Print output counters
+		Counters counters = job.getCounters();
+		System.out.println(counters.toString());
 	}
 
 
@@ -164,6 +169,10 @@ public class ImportJob {
 
 		// run job and block until job is done
 		job.waitForCompletion(false);
+		
+		// Print output counters
+		Counters counters = job.getCounters();
+		System.out.println(counters.toString());
 	}
 	
 	public void run(RDFJobOptions options, boolean printConfig) throws IOException {
