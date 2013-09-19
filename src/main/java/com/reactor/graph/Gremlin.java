@@ -37,6 +37,7 @@ public class Gremlin {
 		Configuration conf = new BaseConfiguration();
 		conf.setProperty("storage.backend","cassandra");
 		conf.setProperty("storage.hostname","127.0.0.1");
+		conf.setProperty("ids.block-size", 100000); 
 
 		graph = TitanFactory.open(conf);
 	}
@@ -49,6 +50,7 @@ public class Gremlin {
 		Configuration conf = new BaseConfiguration();
 		conf.setProperty("storage.backend","cassandra");
 		conf.setProperty("storage.hostname",hostList);
+		conf.setProperty("ids.block-size", 100000);
 
 		graph = TitanFactory.open(conf);
 	}
@@ -111,10 +113,14 @@ public class Gremlin {
 		try {
 			Vertex v = getVertex(mid);
 			
-			if ()
+			if (v == null) {
+				v = graph.addVertex(null);
+				v.setProperty("mid", mid);
+			
+			}
 		}
 		catch (Exception e) {
-			
+			// Ignore
 		}
 	}
 	
