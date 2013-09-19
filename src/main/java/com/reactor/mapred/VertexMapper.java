@@ -63,10 +63,10 @@ public class VertexMapper extends Mapper<LongWritable, Text, Text, Text> {
 	protected void run(Triple triple) {
 
 		try {
-			gremlin.addIDVertex(triple.subject);
+			gremlin.addVertex(triple.subject);
 
 			if (!triple.property) {
-				gremlin.addIDVertex(triple.objectString());
+				gremlin.addVertex(triple.objectString());
 			}
 
 		} catch (Exception e) {

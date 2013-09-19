@@ -12,15 +12,11 @@ import com.thinkaurelius.titan.core.TitanVertex;
 import com.thinkaurelius.titan.core.TypeGroup;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.KeyIndexableGraph;
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.util.wrappers.id.IdGraph;
-import com.tinkerpop.blueprints.util.wrappers.id.IdVertex;
 
 public class Gremlin {
 
 	TitanGraph graph;
-	IdGraph<KeyIndexableGraph> idGraph;
 
 	@SuppressWarnings("serial")
 	public static final Map<String, String> LOWERCASE_PROPERTIES = new HashMap<String, String>() {{
@@ -54,19 +50,6 @@ public class Gremlin {
 
 		graph = TitanFactory.open(conf);
 	}
-
-	public void prepareIDGraph() {
-
-		System.out.println("Wrapping graph in ID Graph...");
-		try {
-			graph.makeType().name("__id").unique(Direction.OUT).indexed(Vertex.class).indexed(Edge.class).dataType(String.class).makePropertyKey();
-		} catch (Exception e) {
-			System.out.println("ID index already created");
-		}
-
-		idGraph = new IdGraph<KeyIndexableGraph>(graph);
-		idGraph.enforceUniqueIds(true);
-	}
 	
 	//================================================================================
 	// Define indices for Freebase data
@@ -94,21 +77,13 @@ public class Gremlin {
 
 		} catch (Exception e) {
 			// Indices already set up
-			e.printStackTrace();
+			System.out.println("Types are already set up.");
 		}
 	}
 
 	//================================================================================
 	// Add vertex
 	//================================================================================
-	public void addIDVertex(String mid) {
-		try {
-			idGraph.addVertex(mid);
-		} catch (Exception e) {
-			// I don't care
-		}
-	}
-
 	public void addVertex(String mid) {
 		try {
 			Vertex v = getVertex(mid);
@@ -116,7 +91,6 @@ public class Gremlin {
 			if (v == null) {
 				v = graph.addVertex(null);
 				v.setProperty("mid", mid);
-			
 			}
 		}
 		catch (Exception e) {
@@ -141,20 +115,6 @@ public class Gremlin {
 			return null;
 		}
 	}
-
-	public Vertex getIDVertex(String mid) {
-
-		try {
-			IdVertex idv = (IdVertex) idGraph.getVertex(mid);
-			Vertex v = idv.getBaseVertex();
-
-			return v;
-
-		} catch (Exception e) {
-			return null;
-		}
-	}
-
 
 	//================================================================================
 	// Add Edge
@@ -205,7 +165,7 @@ public class Gremlin {
 	// HouseKeeping
 	//================================================================================
 	public boolean properlyConnected() {
-		return idGraph != null;
+		return graph != null;
 	}
 
 	//================================================================================
@@ -213,7 +173,7 @@ public class Gremlin {
 	//================================================================================
 	public void commit() {
 		try {
-			idGraph.commit();
+			graph.commit();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -224,7 +184,7 @@ public class Gremlin {
 	//================================================================================
 	public void rollback() {
 		try {
-			idGraph.rollback();
+			graph.rollback();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -235,7 +195,7 @@ public class Gremlin {
 	//================================================================================
 	public void shutdown() {
 		try {
-			idGraph.shutdown();
+			graph.shutdown();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

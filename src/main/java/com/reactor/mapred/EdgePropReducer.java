@@ -58,7 +58,7 @@ public class EdgePropReducer extends Reducer<Text, Text, Text, Text> {
 		try {
 			// Add edge
 			if (!triple.property) {
-				Vertex v2 = gremlin.getIDVertex(triple.objectString());
+				Vertex v2 = gremlin.getVertex(triple.objectString());
 				gremlin.addEdge(triple.predicate, v1, v2);
 			}
 
@@ -73,7 +73,7 @@ public class EdgePropReducer extends Reducer<Text, Text, Text, Text> {
 	}
 
 	private Vertex getSubjectVertex(String mid) {
-		return gremlin.getIDVertex(mid);
+		return gremlin.getVertex(mid);
 	}
 
 	@Override
