@@ -107,6 +107,17 @@ public class Gremlin {
 		}
 	}
 
+	public void addVertex(String mid) {
+		try {
+			Vertex v = getVertex(mid);
+			
+			if ()
+		}
+		catch (Exception e) {
+			
+		}
+	}
+	
 	//================================================================================
 	// Get Vertex
 	//================================================================================
