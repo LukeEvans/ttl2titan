@@ -39,8 +39,6 @@ public class Gremlin {
 		conf.setProperty("storage.hostname","127.0.0.1");
 
 		graph = TitanFactory.open(conf);
-
-		prepareIDGraph();
 	}
 
 	public Gremlin(TitanGraph g) {
@@ -53,8 +51,6 @@ public class Gremlin {
 		conf.setProperty("storage.hostname",hostList);
 
 		graph = TitanFactory.open(conf);
-
-		prepareIDGraph();
 	}
 
 	public void prepareIDGraph() {
