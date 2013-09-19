@@ -67,7 +67,9 @@ public class Gremlin {
 		}
 
 		idGraph = new IdGraph<KeyIndexableGraph>(graph);
+		idGraph.enforceUniqueIds(true);
 	}
+	
 	//================================================================================
 	// Define indices for Freebase data
 	//================================================================================
