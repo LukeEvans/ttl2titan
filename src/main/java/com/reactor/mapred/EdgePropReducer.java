@@ -42,11 +42,11 @@ public class EdgePropReducer extends Reducer<Text, Text, Text, Text> {
 
 				run(subject, triple);
 
-				context.getCounter(ImportCounters.EDGEPROP_SUCCESSFUL_TRANSACTIONS).increment(1l);
+				context.getCounter(ImportCounters.EDGEPROP_REDUCE_SUCCESSFUL_TRANSACTIONS).increment(1l);
 			}
 
 		} catch (Exception e) {
-			context.getCounter(ImportCounters.EDGEPROP_FAILED_TRANSACTIONS).increment(1l);
+			context.getCounter(ImportCounters.EDGEPROP_REDUCE_FAILED_TRANSACTIONS).increment(1l);
 			gremlin.rollback();
 			e.printStackTrace();
 
@@ -79,11 +79,12 @@ public class EdgePropReducer extends Reducer<Text, Text, Text, Text> {
 	@Override
 	protected void cleanup(Reducer<Text, Text, Text, Text>.Context context) throws IOException, InterruptedException {
 		try { 
+			System.out.println("Cleaning up edge/property reducer... ");
 			gremlin.commit();
 		} catch (Exception e) {
 			e.printStackTrace();
 			gremlin.rollback();
-			context.getCounter(ImportCounters.EDGEPROP_FAILED_TRANSACTIONS).increment(1l);
+			context.getCounter(ImportCounters.EDGEPROP_REDUCE_FAILED_TRANSACTIONS).increment(1l);
 		}
 
 		gremlin.shutdown();
