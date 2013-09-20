@@ -42,7 +42,7 @@ public class ImportJob {
 
 	private void runVertexImport(RDFJobOptions options, boolean printConfig) throws IOException, ClassNotFoundException, InterruptedException {
 		// create Hadoop path instances
-		Path inputPath = new Path(options.getInputFile());
+		Path inputPath = new Path(options.getVertexInputFile());
 		Path outputPath = new Path(options.getOuputDir());
 		Path tempDirPath = new Path(outputPath, RAW_SUBDIR_NAME_VERTEX);
 
@@ -86,9 +86,7 @@ public class ImportJob {
 		job.setMapOutputValueClass(Text.class);
 
 		// our reducer class
-		job.setReducerClass(VertexReducer.class);
-		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(Text.class);
+		job.setNumReduceTasks(0);
 		
 		if (printConfig) {
 			System.out.println("starting RDF import job using:");
@@ -111,9 +109,9 @@ public class ImportJob {
 
 	private void runEdgeImport(RDFJobOptions options, boolean printConfig) throws IOException, ClassNotFoundException, InterruptedException {
 		// create Hadoop path instances
-		Path inputPath = new Path(options.getInputFile());
+		Path inputPath = new Path(options.getRDFInputFile());
 		Path outputPath = new Path(options.getOuputDir());
-		Path tempDirPath = new Path(outputPath, RAW_SUBDIR_NAME_VERTEX);
+		Path tempDirPath = new Path(outputPath, RAW_SUBDIR_NAME_EDGEPROP);
 
 		// Create the job configuration
 		Configuration conf = new Configuration();
@@ -155,9 +153,7 @@ public class ImportJob {
 		job.setMapOutputValueClass(Text.class);
 
 		// our reducer class
-		job.setReducerClass(EdgePropReducer.class);
-		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(Text.class);
+		job.setNumReduceTasks(0);
 		
 		if (printConfig) {
 			System.out.println("starting RDF import job using:");

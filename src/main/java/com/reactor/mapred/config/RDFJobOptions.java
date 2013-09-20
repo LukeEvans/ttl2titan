@@ -22,15 +22,21 @@ public class RDFJobOptions {
     // By default we assume we have Titan/Cassandra running locally
     public static final String DEFAULT_CASSANDRA_HOST_LIST = "127.0.0.1";
     
-    private String inputFile;
+    private String vertexInputFile;
+    private String rdfInputFile;
     private String outputDir;
     
     private int numReducers = DEFAULT_REDUCERS;
     private String cassandra_hosts = DEFAULT_CASSANDRA_HOST_LIST;
     
-    @Option(name = "-inputfile", usage = "path to file to process", required = true)
-    public void setInputFile(String inputFile) {
-        this.inputFile = inputFile;
+    @Option(name = "-vertexinputfile", usage = "path to file to process", required = true)
+    public void setVertexInputFile(String inputFile) {
+        this.vertexInputFile = inputFile;
+    }
+    
+    @Option(name = "-rdfinputfile", usage = "path to file to process", required = true)
+    public void setRDFInputFile(String inputFile) {
+        this.rdfInputFile = inputFile;
     }
 
     @Option(name = "-outputdir", usage = "path to directory for results", required = true)
@@ -48,10 +54,14 @@ public class RDFJobOptions {
         this.cassandra_hosts = hosts;
     }
     
-    public String getInputFile() {
-        return inputFile;
+    public String getVertexInputFile() {
+        return vertexInputFile;
     }
 
+    public String getRDFInputFile() {
+        return rdfInputFile;
+    }
+    
     public String getOuputDir() {
         return outputDir;
     }

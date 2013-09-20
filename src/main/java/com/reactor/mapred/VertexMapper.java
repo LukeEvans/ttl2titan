@@ -6,14 +6,19 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
+import com.reactor.graph.Gremlin;
 import com.reactor.mapred.config.ImportCounters;
-import com.reactor.rdf.Triple;
+import com.reactor.mapred.config.RDFJobOptions;
 
 public class VertexMapper extends Mapper<LongWritable, Text, Text, Text> {
+	private Gremlin gremlin;
+	private long count;
 	
 	@Override
 	protected void setup(Mapper<LongWritable, Text, Text, Text>.Context context) throws IOException, InterruptedException {
 		System.out.println("Setting up vertex mapper... ");
+		String hostList = context.getConfiguration().get(RDFJobOptions.HOST_LIST_KEY, RDFJobOptions.DEFAULT_CASSANDRA_HOST_LIST);
+		gremlin = new Gremlin(hostList);
 	}
 
 	@Override
@@ -26,43 +31,40 @@ public class VertexMapper extends Mapper<LongWritable, Text, Text, Text> {
 				return;
 			}
 
-			Triple triple = null;
+			run(line);
+			count++;
 			
-			try {
-				triple = new Triple(line);
-			} catch (Exception e) {
-				context.getCounter(ImportCounters.VERTEX_FAILED_TRIPLE_BUILD).increment(1l);
-				return;
+			if (count % 10000 == 0) {
+				System.out.println("Checkpoint: 10,000");
 			}
-
-			if (triple != null && triple.determineValid()) {
-				
-				Text subject = new Text(triple.subject);
-				context.write(subject, subject);
-				
-				if (!triple.property) {
-					String objectString = triple.objectString();
-					
-					if (objectString == null || objectString.length() == 0) {
-						return;
-					}
-					
-					Text object = new Text(objectString);
-					context.write(object, object);
-				}
-
-				context.getCounter(ImportCounters.VERTEX_MAP_SUCCESSFUL_TRANSACTIONS).increment(1l);
-			}
-
+			
 		} catch (Exception e) {
 			context.getCounter(ImportCounters.VERTEX_MAP_FAILED_TRANSACTIONS).increment(1l);
 			e.printStackTrace();
-
+			gremlin.rollback();
+			
 			throw new IOException(e.getMessage(), e);
 		}
 	}
 
+	private void run(String mid) {
+		try {
+			gremlin.addVertex(mid);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
 	protected void cleanup(Mapper<LongWritable, Text, Text, Text>.Context context) throws IOException, InterruptedException {
-		System.out.println("Cleaning up vertex mapper... ");
+		try { 
+			System.out.println("Cleaning up vertex mapper... ");
+			gremlin.commit();
+		} catch (Exception e) {
+			e.printStackTrace();
+			gremlin.rollback();
+			context.getCounter(ImportCounters.VERTEX_REDUCE_FAILED_TRANSACTIONS).increment(1l);
+		}
+
+		gremlin.shutdown();
 	}
 }

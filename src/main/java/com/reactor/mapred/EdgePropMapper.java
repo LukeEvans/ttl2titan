@@ -6,14 +6,22 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
+import com.reactor.graph.Gremlin;
 import com.reactor.mapred.config.ImportCounters;
+import com.reactor.mapred.config.RDFJobOptions;
 import com.reactor.rdf.Triple;
+import com.tinkerpop.blueprints.Vertex;
 
 public class EdgePropMapper extends Mapper<LongWritable, Text, Text, Text> {
+	
+	private Gremlin gremlin;
+	private long count;
 	
 	@Override
 	protected void setup(Mapper<LongWritable, Text, Text, Text>.Context context) throws IOException, InterruptedException {
 		System.out.println("Setting up Edge/Property mapper... ");
+		String hostList = context.getConfiguration().get(RDFJobOptions.HOST_LIST_KEY, RDFJobOptions.DEFAULT_CASSANDRA_HOST_LIST);
+		gremlin = new Gremlin(hostList);
 	}
 
 	@Override
@@ -37,22 +45,53 @@ public class EdgePropMapper extends Mapper<LongWritable, Text, Text, Text> {
 
 			if (triple != null && triple.determineValid()) {
 				
-				Text subject = new Text(triple.subject);
-				Text val = new Text(line);
-				context.write(subject, val);
-
+				run(triple);
+				count++;
+				
+				if (count % 10000 == 0) {
+					System.out.println("Checkpoint: 10,000");
+				}
+				
 				context.getCounter(ImportCounters.EDGEPROP_MAP_SUCCESSFUL_TRANSACTIONS).increment(1l);
 			}
 
 		} catch (Exception e) {
 			context.getCounter(ImportCounters.EDGEPROP_MAP_FAILED_TRANSACTIONS).increment(1l);
 			e.printStackTrace();
-
+			gremlin.rollback();
+			
 			throw new IOException(e.getMessage(), e);
 		}
 	}
 
+	private void run(Triple triple) {
+		try {
+			Vertex v1 = gremlin.getVertex(triple.subject);
+			
+			if (!triple.property) {
+				Vertex v2 = gremlin.getVertex(triple.objectString());
+				gremlin.addEdge(triple.predicate, v1, v2);
+			}
+			
+			else {
+				gremlin.addProperty(v1, triple.predicate, triple.object);
+			}
+			
+		} catch (Exception e) {
+			
+		}
+	}
+	
 	protected void cleanup(Mapper<LongWritable, Text, Text, Text>.Context context) throws IOException, InterruptedException {
-		System.out.println("Cleaning up EdgeProperty mapper... ");
+		try { 
+			System.out.println("Cleaning up edge/property mapper... ");
+			gremlin.commit();
+		} catch (Exception e) {
+			e.printStackTrace();
+			gremlin.rollback();
+			context.getCounter(ImportCounters.EDGEPROP_REDUCE_FAILED_TRANSACTIONS).increment(1l);
+		}
+
+		gremlin.shutdown();
 	}
 }
