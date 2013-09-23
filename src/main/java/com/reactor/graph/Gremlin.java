@@ -34,6 +34,7 @@ public class Gremlin {
 		conf.setProperty("storage.backend","cassandra");
 		conf.setProperty("storage.hostname","127.0.0.1");
 		conf.setProperty("ids.block-size", 100000); 
+		conf.setProperty("storage.batch-loading", true);
 
 		graph = TitanFactory.open(conf);
 	}
@@ -47,6 +48,7 @@ public class Gremlin {
 		conf.setProperty("storage.backend","cassandra");
 		conf.setProperty("storage.hostname",hostList);
 		conf.setProperty("ids.block-size", 100000);
+		conf.setProperty("storage.batch-loading", true);
 
 		graph = TitanFactory.open(conf);
 	}
@@ -89,6 +91,7 @@ public class Gremlin {
 			graph.createKeyIndex(name,Vertex.class);
 			return true;
 		} catch (Exception e) {
+			//e.printStackTrace();
 			// Ignore
 			return false;
 		}
@@ -99,9 +102,10 @@ public class Gremlin {
 	//================================================================================
 	public boolean addEdgeLabel(String name) {
 		try {
-			graph.makeType().name(name).dataType(String.class).makeEdgeLabel();
+			graph.makeType().name(name).makeEdgeLabel();
 			return true;
 		} catch (Exception e) {
+			//e.printStackTrace();
 			// Ignore
 			return false;
 		}

@@ -32,7 +32,14 @@ public class TypeMapper extends Mapper<LongWritable, Text, Text, Text> {
 				return;
 			}
 
-			Triple triple = new Triple(line);
+			Triple triple = null;
+			
+			try {
+				triple = new Triple(line);
+			} catch (Exception e) {
+				context.getCounter(ImportCounters.EDGEPROP_FAILED_TRIPLE_BUILD).increment(1l);
+				return;
+			}
 			
 			if (triple != null && triple.determineValid()) {
 				boolean success = false;
@@ -49,7 +56,7 @@ public class TypeMapper extends Mapper<LongWritable, Text, Text, Text> {
 				}
 			}
 			
-			if (count % 10000 == 0) {
+			if (count % 1000 == 0) {
 				System.out.println("Checkpoint: " + count);
 			}
 			
