@@ -49,7 +49,11 @@ public class EdgePropMapper extends Mapper<LongWritable, Text, Text, Text> {
 				count++;
 				
 				if (count % 10000 == 0) {
-					System.out.println("Checkpoint: 10,000");
+					System.out.println("Checkpoint: " + count);
+				}
+				
+				if (count % 1000 == 0) {
+					gremlin.commit();
 				}
 				
 				context.getCounter(ImportCounters.EDGEPROP_MAP_SUCCESSFUL_TRANSACTIONS).increment(1l);
@@ -82,11 +86,14 @@ public class EdgePropMapper extends Mapper<LongWritable, Text, Text, Text> {
 		}
 	}
 	
+	@Override
 	protected void cleanup(Mapper<LongWritable, Text, Text, Text>.Context context) throws IOException, InterruptedException {
 		try { 
 			System.out.println("Cleaning up edge/property mapper... ");
 			gremlin.commit();
+			System.out.println("Cleaned up and commited Edge/Prop mapper... ");
 		} catch (Exception e) {
+			System.out.println("Failed cleanup of Edge/Prop mapper... ");
 			e.printStackTrace();
 			gremlin.rollback();
 			context.getCounter(ImportCounters.EDGEPROP_REDUCE_FAILED_TRANSACTIONS).increment(1l);

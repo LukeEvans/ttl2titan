@@ -50,7 +50,7 @@ public class Gremlin {
 
 		graph = TitanFactory.open(conf);
 	}
-	
+
 	//================================================================================
 	// Define indices for Freebase data
 	//================================================================================
@@ -87,7 +87,7 @@ public class Gremlin {
 	public void addVertex(String mid) {
 		try {
 			Vertex v = getVertex(mid);
-			
+
 			if (v == null) {
 				v = graph.addVertex(null);
 				v.setProperty("mid", mid);
@@ -97,7 +97,7 @@ public class Gremlin {
 			// Ignore
 		}
 	}
-	
+
 	//================================================================================
 	// Get Vertex
 	//================================================================================
@@ -172,11 +172,7 @@ public class Gremlin {
 	// Commit Graph
 	//================================================================================
 	public void commit() {
-		try {
-			graph.commit();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		graph.commit();
 	}
 
 	//================================================================================
@@ -189,7 +185,7 @@ public class Gremlin {
 			e.printStackTrace();
 		}
 	}
-	
+
 	//================================================================================
 	// Graph shutdown
 	//================================================================================
@@ -200,6 +196,6 @@ public class Gremlin {
 			e.printStackTrace();
 		}
 	}
-	
-	
+
+
 }
