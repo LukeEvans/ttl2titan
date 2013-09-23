@@ -82,6 +82,32 @@ public class Gremlin {
 	}
 
 	//================================================================================
+	// Add Property Key
+	//================================================================================
+	public boolean addPropertyKey(String name) {
+		try {
+			graph.createKeyIndex(name,Vertex.class);
+			return true;
+		} catch (Exception e) {
+			// Ignore
+			return false;
+		}
+	}
+	
+	//================================================================================
+	// Add Edge Label
+	//================================================================================
+	public boolean addEdgeLabel(String name) {
+		try {
+			graph.makeType().name(name).dataType(String.class).makeEdgeLabel();
+			return true;
+		} catch (Exception e) {
+			// Ignore
+			return false;
+		}
+	}
+	
+	//================================================================================
 	// Add vertex
 	//================================================================================
 	public void addVertex(String mid) {
