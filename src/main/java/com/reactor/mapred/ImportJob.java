@@ -178,7 +178,7 @@ public class ImportJob {
 	
 	public void runTypeImport(RDFJobOptions options, boolean printConfig) throws IOException, ClassNotFoundException, InterruptedException {
 		// create Hadoop path instances
-		Path inputPath = new Path(options.getRDFInputFile());
+		Path inputPath = new Path(options.getTypeInputFile());
 		Path outputPath = new Path(options.getOuputDir());
 		Path tempDirPath = new Path(outputPath, RAW_SUBDIR_NAME_TYPES);
 

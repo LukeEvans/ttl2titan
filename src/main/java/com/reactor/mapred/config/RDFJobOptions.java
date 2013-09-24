@@ -23,6 +23,7 @@ public class RDFJobOptions {
     public static final String DEFAULT_CASSANDRA_HOST_LIST = "127.0.0.1";
     
     private String vertexInputFile;
+    private String typeInputfile;
     private String rdfInputFile;
     private String outputDir;
     
@@ -32,6 +33,11 @@ public class RDFJobOptions {
     @Option(name = "-vertexinputfile", usage = "path to file to process", required = true)
     public void setVertexInputFile(String inputFile) {
         this.vertexInputFile = inputFile;
+    }
+    
+    @Option(name = "-typeinputfile", usage = "path to file to process", required = true)
+    public void setTypeInputFile(String inputFile) {
+        this.typeInputfile = inputFile;
     }
     
     @Option(name = "-rdfinputfile", usage = "path to file to process", required = true)
@@ -58,6 +64,10 @@ public class RDFJobOptions {
         return vertexInputFile;
     }
 
+    public String getTypeInputFile() {
+        return typeInputfile;
+    }
+    
     public String getRDFInputFile() {
         return rdfInputFile;
     }

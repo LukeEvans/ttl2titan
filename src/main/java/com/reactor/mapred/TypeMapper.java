@@ -9,7 +9,6 @@ import org.apache.hadoop.mapreduce.Mapper;
 import com.reactor.graph.Gremlin;
 import com.reactor.mapred.config.ImportCounters;
 import com.reactor.mapred.config.RDFJobOptions;
-import com.reactor.rdf.Triple;
 
 public class TypeMapper extends Mapper<LongWritable, Text, Text, Text> {
 	private Gremlin gremlin;
@@ -33,40 +32,34 @@ public class TypeMapper extends Mapper<LongWritable, Text, Text, Text> {
 				return;
 			}
 
-			Triple triple = null;
+			boolean success = false;
 
-			try {
-				triple = new Triple(line);
-			} catch (Exception e) {
-				context.getCounter(ImportCounters.EDGEPROP_FAILED_TRIPLE_BUILD).increment(1l);
-				return;
+			// Edge
+			if (line.startsWith("EDGE__")) {
+				String edge = line.replaceFirst("EDGE__", "");
+				success = gremlin.addEdgeLabel(edge);
 			}
 
-			if (triple != null && triple.determineValid()) {
-				boolean success = false;
-				if (triple.property) {
-					success = gremlin.addPropertyKey(triple.predicate);
-				}
-
-				else {
-					success = gremlin.addEdgeLabel(triple.predicate);
-				}
-
-				if (success) {
-					count++;
-
-					if (count % 10000 == 0) {
-						System.out.println("Checkpoint: " + count);
-					}
-
-					if (count % 10 == 0) {
-						gremlin.commit();
-					}
-
-					context.getCounter(ImportCounters.VERTEX_MAP_SUCCESSFUL_TRANSACTIONS).increment(1l);
-				}
+			// Property
+			else if (line.startsWith("PROP__")) {
+				String prop = line.replaceFirst("PROP__", "");
+				success = gremlin.addPropertyKey(prop);
 			}
 
+			if (success) {
+				count++;
+
+				if (count % 10000 == 0) {
+					System.out.println("Checkpoint: " + count);
+				}
+
+				if (count % 1000 == 0) {
+					gremlin.commit();
+				}
+
+				context.getCounter(ImportCounters.VERTEX_MAP_SUCCESSFUL_TRANSACTIONS).increment(1l);
+			}
+			
 		} catch (Exception e) {
 			context.getCounter(ImportCounters.VERTEX_MAP_FAILED_TRANSACTIONS).increment(1l);
 			e.printStackTrace();
