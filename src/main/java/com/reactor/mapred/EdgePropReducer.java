@@ -19,7 +19,7 @@ public class EdgePropReducer extends Reducer<Text, Text, Text, Text> {
 	protected void setup(Reducer<Text, Text, Text, Text>.Context context) throws IOException, InterruptedException {
 		System.out.println("Setting up edge/property reducer... ");
 		String hostList = context.getConfiguration().get(RDFJobOptions.HOST_LIST_KEY, RDFJobOptions.DEFAULT_CASSANDRA_HOST_LIST);
-		gremlin = new Gremlin(hostList);
+		gremlin = new Gremlin(hostList, false);
 	}
 
 	@Override

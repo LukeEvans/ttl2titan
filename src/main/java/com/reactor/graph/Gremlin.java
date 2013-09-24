@@ -27,28 +27,14 @@ public class Gremlin {
 	}};
 
 	//================================================================================
-	// Constructors
+	// Constructor
 	//================================================================================
-	public Gremlin() {
-		Configuration conf = new BaseConfiguration();
-		conf.setProperty("storage.backend","cassandra");
-		conf.setProperty("storage.hostname","127.0.0.1");
-		conf.setProperty("ids.block-size", 100000); 
-		conf.setProperty("storage.batch-loading", true);
-
-		graph = TitanFactory.open(conf);
-	}
-
-	public Gremlin(TitanGraph g) {
-		graph = g;
-	}
-
-	public Gremlin(String hostList) {
+	public Gremlin(String hostList, boolean batchLoading) {
 		Configuration conf = new BaseConfiguration();
 		conf.setProperty("storage.backend","cassandra");
 		conf.setProperty("storage.hostname",hostList);
 		conf.setProperty("ids.block-size", 100000);
-		conf.setProperty("storage.batch-loading", true);
+		conf.setProperty("storage.batch-loading", batchLoading);
 
 		graph = TitanFactory.open(conf);
 	}

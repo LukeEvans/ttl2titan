@@ -18,7 +18,8 @@ public class VertexMapper extends Mapper<LongWritable, Text, Text, Text> {
 	protected void setup(Mapper<LongWritable, Text, Text, Text>.Context context) throws IOException, InterruptedException {
 		System.out.println("Setting up vertex mapper... ");
 		String hostList = context.getConfiguration().get(RDFJobOptions.HOST_LIST_KEY, RDFJobOptions.DEFAULT_CASSANDRA_HOST_LIST);
-		gremlin = new Gremlin(hostList);
+		boolean batchLoading = true;
+		gremlin = new Gremlin(hostList, batchLoading);
 	}
 
 	@Override

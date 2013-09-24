@@ -36,7 +36,8 @@ public class ImportJob {
 
 	private void runIndexAdder(RDFJobOptions options) {
 		String hostList = options.getCassandra_hosts();
-		Gremlin gremlin = new Gremlin(hostList);
+		boolean batchLoading = false;
+		Gremlin gremlin = new Gremlin(hostList, batchLoading);
 
 		gremlin.runFreebaseIndexAdds();
 	}
@@ -247,27 +248,27 @@ public class ImportJob {
 		// trigger exceptions that look like "Failed to set setXIncludeAware(true) for parser blah"
 		System.setProperty("javax.xml.parsers.DocumentBuilderFactory", "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
 
-//		try {
-//			System.out.println("Starting Type Import...");
-//			runTypeImport(options, printConfig);
-//			System.out.println("Finished Type Import...\n");
-//			
-//		} catch (Exception e) {
-//			System.err.println("Exception running Type job to import RDF data: " + e.getMessage());
-//			e.printStackTrace(System.err);
-//			System.exit(-1);
-//		}
+		try {
+			System.out.println("Starting Type Import...");
+			runTypeImport(options, printConfig);
+			System.out.println("Finished Type Import...\n");
+			
+		} catch (Exception e) {
+			System.err.println("Exception running Type job to import RDF data: " + e.getMessage());
+			e.printStackTrace(System.err);
+			System.exit(-1);
+		}
 		
-//		try {
-//			System.out.println("Starting Vertex Import...");
-//			runVertexImport(options, printConfig);
-//			System.out.println("Finished Vertex Import...\n");
-//			
-//		} catch (Exception e) {
-//			System.err.println("Exception running Vertex job to import RDF data: " + e.getMessage());
-//			e.printStackTrace(System.err);
-//			System.exit(-1);
-//		}
+		try {
+			System.out.println("Starting Vertex Import...");
+			runVertexImport(options, printConfig);
+			System.out.println("Finished Vertex Import...\n");
+			
+		} catch (Exception e) {
+			System.err.println("Exception running Vertex job to import RDF data: " + e.getMessage());
+			e.printStackTrace(System.err);
+			System.exit(-1);
+		}
 		
 		try {
 			System.out.println("Starting Edge/Prop Import...");
