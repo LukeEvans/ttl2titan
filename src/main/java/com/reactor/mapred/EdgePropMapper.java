@@ -64,8 +64,14 @@ public class EdgePropMapper extends Mapper<LongWritable, Text, Text, Text> {
 			context.getCounter(ImportCounters.EDGEPROP_MAP_FAILED_TRANSACTIONS).increment(1l);
 			e.printStackTrace();
 			gremlin.rollback();
+			System.out.println("\n------------------");
+			System.out.println(e.getMessage());
+			System.out.println(e.getLocalizedMessage());
+			System.out.println("------------------\n");
 			
-			throw new IOException(e.getMessage(), e);
+			
+			// Ignore for now
+			//throw new IOException(e.getMessage(), e);
 		}
 	}
 
